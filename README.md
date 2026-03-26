@@ -1,7 +1,5 @@
 # AWS Multi-AZ Auto Scaling Web Application
 
-## Project Overview
-
 A production-ready, highly available web application infrastructure on AWS that automatically scales based on CPU usage. Built entirely with Terraform as Infrastructure as Code.
 
 **Live Demo:** [http://dona-alb-1689052785.eu-west-2.elb.amazonaws.com](http://dona-alb-1689052785.eu-west-2.elb.amazonaws.com)
@@ -88,24 +86,25 @@ A production-ready, highly available web application infrastructure on AWS that 
 
 ## Project Structure
 
+```
 aws-auto-scaling-webapp/
-├── main.tf # Main Terraform configuration
-├── variables.tf # Variable definitions
-├── outputs.tf # Output definitions
-├── terraform.tfvars.example # Example variable values
-├── .gitignore # Git ignore rules
-├── README.md # Project documentation
-└── screenshots/ # Project screenshots
-├── 1-architecture-diagram.jpeg
-├── 2-website-live.png
-├── 3-load-balancing-demo.png
-├── 4-asg-healthy.png
-├── 5-target-group-healthy.png
-├── 6-cloudwatch-alarms.png
-├── 7-terraform-apply.png
-├── 8-bastion-ssh.png
-└── 9-github-code.png
-
+├── main.tf                      # Main Terraform configuration
+├── variables.tf                 # Variable definitions
+├── outputs.tf                   # Output definitions
+├── terraform.tfvars.example     # Example variable values
+├── .gitignore                   # Git ignore rules
+├── README.md                    # Project documentation
+└── screenshots/                 # Project screenshots (9 images)
+    ├── 1-architecture-diagram.jpeg
+    ├── 2-website-live.png
+    ├── 3-load-balancing-demo.png
+    ├── 4-asg-healthy.png
+    ├── 5-target-group-healthy.png
+    ├── 6-cloudwatch-alarms.png
+    ├── 7-terraform-apply.png
+    ├── 8-bastion-ssh.png
+    └── 9-github-code.png
+```
 
 ---
 
@@ -121,143 +120,171 @@ aws-auto-scaling-webapp/
 ### Deployment Steps
 
 **1. Clone the repository**
+
 ```bash
 git clone https://github.com/donaemeka/aws-auto-scaling-webapp.git
 cd aws-auto-scaling-webapp
+```
 
-Configure variables
+**2. Configure variables**
 
-bash
+```bash
 cp terraform.tfvars.example terraform.tfvars
-Edit terraform.tfvars with your values:
+```
 
-hcl
-ssh_allowed_ip = "YOUR_IP/32"        # Find at https://ifconfig.me
-key_name       = "YOUR_KEY_NAME"     # Your EC2 key pair name
-3. Initialize Terraform
+Edit `terraform.tfvars` with your values:
 
-bash
+```hcl
+ssh_allowed_ip = "YOUR_IP/32"
+key_name       = "YOUR_KEY_NAME"
+```
+
+**3. Initialize Terraform**
+
+```bash
 terraform init
-4. Review the plan
+```
 
-bash
+**4. Review the plan**
+
+```bash
 terraform plan
-5. Apply the configuration
+```
 
-bash
+**5. Apply the configuration**
+
+```bash
 terraform apply
-Type yes when prompted.
+```
 
-6. Get your website URL
+Type `yes` when prompted.
 
-bash
+**6. Get your website URL**
+
+```bash
 terraform output alb_dns_name
-How to Connect to Private Instances
-Option 1: SSH via Bastion
-bash
-# SSH to bastion
+```
+
+---
+
+## How to Connect to Private Instances
+
+### Option 1: SSH via Bastion
+
+```bash
 ssh -i your-key.pem ubuntu@$(terraform output bastion_public_ip)
-
-# From bastion, SSH to private instance
 ssh -i your-key.pem ubuntu@<private-instance-ip>
-Option 2: SSH Jump (One-Liner)
-bash
+```
+
+### Option 2: SSH Jump (One-Liner)
+
+```bash
 ssh -J ubuntu@$(terraform output bastion_public_ip) -i your-key.pem ubuntu@<private-ip>
-Option 3: AWS Systems Manager Session Manager
-Go to AWS Console → Systems Manager → Session Manager
+```
 
-Click Start session
+### Option 3: AWS Systems Manager Session Manager
 
-Select your private instance
+1. Go to AWS Console → Systems Manager → Session Manager
+2. Click **Start session**
+3. Select your private instance
 
-Testing Auto Scaling
-1. SSH into a private instance
+---
 
-bash
+## Testing Auto Scaling
+
+**1. SSH into a private instance**
+
+```bash
 ssh -i your-key.pem ubuntu@<private-ip>
-2. Install stress tool
+```
 
-bash
+**2. Install stress tool**
+
+```bash
 sudo apt update && sudo apt install stress -y
-3. Generate CPU load
+```
 
-bash
+**3. Generate CPU load**
+
+```bash
 stress --cpu 2 --timeout 300 &
-4. Monitor CloudWatch Alarms
+```
 
-Go to CloudWatch → Alarms
+**4. Monitor CloudWatch Alarms**
 
-Watch high-cpu-alarm change from OK → ALARM
+- Go to CloudWatch → Alarms
+- Watch `high-cpu-alarm` change from OK → ALARM
 
-5. Check Auto Scaling Group
+**5. Check Auto Scaling Group**
 
-Go to EC2 → Auto Scaling Groups
+- Go to EC2 → Auto Scaling Groups
+- New instance will launch, desired capacity increases to 3
 
-New instance will launch, desired capacity increases to 3
+---
 
-Challenges and Solutions
-Challenge	Solution
-t2.micro not free tier eligible	Changed to t3.micro
-Health checks failing	Added health_check_grace_period = 300
-Private instances no internet	Enabled NAT Gateway
-EC2 couldn't reach internet	Added outbound rule 0.0.0.0/0
-Invalid AMI ID	Used data source to find latest AMI
-Instance metadata not working	Used token-based IMDSv2
-SSH key not on instances	Added key_name to ASG module
-SSH from bastion denied	Added rule allowing SSH from bastion SG
-Provider version conflicts	Updated to >= 6.29.0
-Key Learnings
-VPC Design: Public/private subnets across multiple AZs
+## Challenges and Solutions
 
-NAT Gateway: Enables private instances to reach internet
+| Challenge | Solution |
+|-----------|----------|
+| t2.micro not free tier eligible | Changed to t3.micro |
+| Health checks failing | Added `health_check_grace_period = 300` |
+| Private instances no internet | Enabled NAT Gateway |
+| EC2 couldn't reach internet | Added outbound rule `0.0.0.0/0` |
+| Invalid AMI ID | Used data source to find latest AMI |
+| Instance metadata not working | Used token-based IMDSv2 |
+| SSH key not on instances | Added `key_name` to ASG module |
+| SSH from bastion denied | Added rule allowing SSH from bastion SG |
+| Provider version conflicts | Updated to `>= 6.29.0` |
 
-Auto Scaling: Min/max/desired with launch templates
+---
 
-CloudWatch Alarms: CPU thresholds with evaluation periods
+## Key Learnings
 
-Security Groups: Least privilege access rules
+- **VPC Design:** Public/private subnets across multiple AZs
+- **NAT Gateway:** Enables private instances to reach internet
+- **Auto Scaling:** Min/max/desired with launch templates
+- **CloudWatch Alarms:** CPU thresholds with evaluation periods
+- **Security Groups:** Least privilege access rules
+- **Bastion Host:** Secure SSH access to private instances
+- **Terraform Modules:** Using and configuring registry modules
+- **User Data:** Automating software installation on launch
 
-Bastion Host: Secure SSH access to private instances
+---
 
-Terraform Modules: Using and configuring registry modules
+## Cost Considerations
 
-User Data: Automating software installation on launch
+| Resource | Estimated Monthly Cost |
+|----------|------------------------|
+| EC2 (t3.micro) × 2 | ~$15 |
+| NAT Gateway | ~$32 |
+| Application Load Balancer | ~$16 |
+| Data Transfer | ~$5-10 |
+| **Total** | **~$70-80** |
 
-Cost Considerations
-Resource	Estimated Monthly Cost
-EC2 (t3.micro) × 2	~$15
-NAT Gateway	~$32
-Application Load Balancer	~$16
-Data Transfer	~$5-10
-Total	~$70-80
-To avoid charges: Run terraform destroy when not using
+To avoid charges: Run `terraform destroy` when not using.
 
-Clean Up
-bash
+---
+
+## Clean Up
+
+```bash
 terraform destroy
-Type yes when prompted.
+```
 
-Interview Questions
-Q: How does your architecture ensure high availability?
-A: Multi-AZ deployment across 3 Availability Zones, ALB distributes traffic, Auto Scaling maintains minimum 2 instances, and health checks ensure only healthy instances receive traffic.
+Type `yes` when prompted.
 
-Q: Why did you need a NAT Gateway?
-A: Private instances need to download packages but cannot have direct internet access. NAT Gateway allows outbound internet while preventing inbound connections.
+---
 
-Q: What would happen if an AZ goes down?
-A: ALB detects unhealthy instances, stops sending traffic to that AZ, and Auto Scaling launches replacement instances in healthy AZs. Website continues serving traffic with no downtime.
+## Contact
 
-Q: How do you prevent false alarms?
-A: Evaluation periods (2 periods = 4 minutes) prevent scaling from temporary spikes. Cooldown periods (300 seconds) allow instances to stabilize.
+**Author:** Donatus Emeka Anyalebechi
 
-Contact
-Author: Donatus Emeka
+**GitHub:** [@donaemeka](https://github.com/donaemeka)
 
-GitHub: @donaemeka
+**LinkedIn:** [www.linkedin.com/in/donatus-devops](https://www.linkedin.com/in/donatus-devops)
 
-LinkedIn: www.linkedin.com/in/donatus-devops
+**Email:** donaemeka92@gmail.com
 
-Email: donaemeka92@gmail.com
+---
 
 © 2026 Donatus Emeka
-
