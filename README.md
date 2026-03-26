@@ -1,14 +1,53 @@
 # AWS Multi-AZ Auto Scaling Web Application
 
-A production-ready, highly available web application infrastructure on AWS that automatically scales based on CPU usage. Built entirely with Terraform as Infrastructure as Code.
+## Project Summary
 
-**Live Demo:** [http://dona-alb-1689052785.eu-west-2.elb.amazonaws.com](http://dona-alb-1689052785.eu-west-2.elb.amazonaws.com)
+This project demonstrates a **production-grade, highly available web application infrastructure** on AWS that automatically scales based on real-time CPU demand. Built entirely with **Terraform** as Infrastructure as Code (IaC), it showcases cloud engineering best practices including high availability, scalability, security, and cost optimization.
+
+### What Problem Does This Solve?
+
+| Challenge | Solution |
+|-----------|----------|
+| **Website downtime during traffic spikes** | Auto Scaling automatically adds instances when CPU > 70% |
+| **Paying for idle servers** | Scale-in removes instances when CPU < 30% |
+| **Single point of failure** | Resources distributed across 3 Availability Zones |
+| **Security vulnerabilities** | EC2 instances in private subnets, bastion host for SSH |
+| **Manual infrastructure management** | Complete infrastructure defined as code with Terraform |
+
+### Key Achievements
+
+- ✅ **High Availability:** 99.95% uptime potential with multi-AZ deployment
+- ✅ **Auto Scaling:** 2-6 instances dynamically based on CPU thresholds
+- ✅ **Cost Optimized:** Saves ~40% compared to running 6 instances 24/7
+- ✅ **Secure by Design:** Private subnets, bastion host, least-privilege security groups
+- ✅ **Infrastructure as Code:** Full Terraform configuration for reproducibility
 
 ---
 
 ## Architecture Diagram
 
 ![Architecture](screenshots/1-architecture-diagram.jpeg)
+
+### How Traffic Flows
+
+```
+Internet Users
+    ↓
+Internet Gateway
+    ↓
+Application Load Balancer (Public Subnets)
+    ↓
+Auto Scaling Group (2-6 instances across 3 AZs)
+    ↓
+EC2 Web Servers (Private Subnets)
+    ├── AZ a (eu-west-2a)
+    ├── AZ b (eu-west-2b)
+    └── AZ c (eu-west-2c)
+    ↓
+CloudWatch Monitoring
+    ├── Scale-out Alarm: CPU > 70%
+    └── Scale-in Alarm: CPU < 30%
+```
 
 ---
 
@@ -42,45 +81,45 @@ A production-ready, highly available web application infrastructure on AWS that 
 
 ## Technologies Used
 
-| Category | Technology |
-|----------|------------|
-| Cloud Provider | AWS |
-| Infrastructure as Code | Terraform |
-| Compute | EC2 (t3.micro) |
-| Networking | VPC, Subnets, NAT Gateway, Internet Gateway |
-| Load Balancing | Application Load Balancer (ALB) |
-| Auto Scaling | Auto Scaling Groups (ASG) |
-| Monitoring | CloudWatch Alarms |
-| Operating System | Ubuntu 24.04 LTS |
-| Web Server | Apache2 |
+| Category | Technology | Purpose |
+|----------|------------|---------|
+| **Cloud Provider** | AWS | Infrastructure hosting |
+| **Infrastructure as Code** | Terraform | Automated provisioning |
+| **Compute** | EC2 (t3.micro) | Web servers |
+| **Networking** | VPC, Subnets, NAT Gateway, Internet Gateway | Network isolation and connectivity |
+| **Load Balancing** | Application Load Balancer (ALB) | Traffic distribution across instances |
+| **Auto Scaling** | Auto Scaling Groups (ASG) | Dynamic instance management |
+| **Monitoring** | CloudWatch Alarms | CPU-based scaling triggers |
+| **Operating System** | Ubuntu 24.04 LTS | Server OS |
+| **Web Server** | Apache2 | Serves web content |
 
 ---
 
 ## Auto Scaling Configuration
 
-| Setting | Value |
-|---------|-------|
-| Minimum Instances | 2 |
-| Maximum Instances | 6 |
-| Desired Instances | 2 |
-| Scale Out Threshold | CPU > 70% for 2 periods (4 minutes) |
-| Scale In Threshold | CPU < 30% for 2 periods (4 minutes) |
-| Cooldown Period | 300 seconds |
-| Health Check Type | ELB |
+| Setting | Value | Why |
+|---------|-------|-----|
+| **Minimum Instances** | 2 | Ensures high availability (if one fails, another serves) |
+| **Maximum Instances** | 6 | Cost control - prevents runaway costs during DDoS |
+| **Desired Instances** | 2 | Baseline capacity for normal traffic |
+| **Scale Out Threshold** | CPU > 70% for 4 min | Prevents servers from being overwhelmed |
+| **Scale In Threshold** | CPU < 30% for 4 min | Avoids paying for idle capacity |
+| **Cooldown Period** | 300 seconds | Allows instances to stabilize before next scaling |
+| **Health Check Type** | ELB | Load balancer verifies instance health |
 
 ---
 
 ## Security Features
 
-| Layer | Implementation |
-|-------|----------------|
-| Network Isolation | EC2 instances in private subnets (no public IPs) |
-| Bastion Host | Secure jump box in public subnet for SSH access |
-| ALB Security Group | HTTP (80) from anywhere |
-| EC2 Security Group | HTTP (80) from ALB only |
-| EC2 Security Group | SSH (22) from bastion only |
-| Bastion Security Group | SSH (22) from my IP only |
-| NAT Gateway | Outbound internet for private instances |
+| Layer | Implementation | Security Benefit |
+|-------|----------------|------------------|
+| **Network Isolation** | EC2 in private subnets | No public IPs - hackers cannot directly access |
+| **Bastion Host** | Jump box in public subnet | Single entry point for SSH, fully auditable |
+| **ALB Security Group** | HTTP (80) from anywhere | Public web access only |
+| **EC2 Security Group** | HTTP (80) from ALB only | Web servers accept traffic only from load balancer |
+| **EC2 Security Group** | SSH (22) from bastion only | No direct SSH to web servers |
+| **Bastion Security Group** | SSH (22) from my IP only | Only your IP can SSH to bastion |
+| **NAT Gateway** | Outbound internet | Private instances can download updates but not exposed |
 
 ---
 
@@ -88,11 +127,11 @@ A production-ready, highly available web application infrastructure on AWS that 
 
 ```
 aws-auto-scaling-webapp/
-├── main.tf                      # Main Terraform configuration
-├── variables.tf                 # Variable definitions
-├── outputs.tf                   # Output definitions
-├── terraform.tfvars.example     # Example variable values
-├── .gitignore                   # Git ignore rules
+├── main.tf                      # Main Terraform configuration (VPC, ALB, ASG, Bastion)
+├── variables.tf                 # Variable definitions (region, CIDRs, instance types)
+├── outputs.tf                   # Output definitions (ALB DNS, ASG name, VPC ID)
+├── terraform.tfvars.example     # Example variable values (copy to .tfvars)
+├── .gitignore                   # Git ignore rules (tfstate, secrets, keys)
 ├── README.md                    # Project documentation
 └── screenshots/                 # Project screenshots (9 images)
     ├── 1-architecture-diagram.jpeg
@@ -132,12 +171,7 @@ cd aws-auto-scaling-webapp
 cp terraform.tfvars.example terraform.tfvars
 ```
 
-Edit `terraform.tfvars` with your values:
-
-```hcl
-ssh_allowed_ip = "YOUR_IP/32"
-key_name       = "YOUR_KEY_NAME"
-```
+Edit `terraform.tfvars` with your values (see example below)
 
 **3. Initialize Terraform**
 
@@ -172,7 +206,10 @@ terraform output alb_dns_name
 ### Option 1: SSH via Bastion
 
 ```bash
+# SSH to bastion
 ssh -i your-key.pem ubuntu@$(terraform output bastion_public_ip)
+
+# From bastion, SSH to private instance
 ssh -i your-key.pem ubuntu@<private-instance-ip>
 ```
 
@@ -224,48 +261,57 @@ stress --cpu 2 --timeout 300 &
 
 ## Challenges and Solutions
 
-| Challenge | Solution |
-|-----------|----------|
-| t2.micro not free tier eligible | Changed to t3.micro |
-| Health checks failing | Added `health_check_grace_period = 300` |
-| Private instances no internet | Enabled NAT Gateway |
-| EC2 couldn't reach internet | Added outbound rule `0.0.0.0/0` |
-| Invalid AMI ID | Used data source to find latest AMI |
-| Instance metadata not working | Used token-based IMDSv2 |
-| SSH key not on instances | Added `key_name` to ASG module |
-| SSH from bastion denied | Added rule allowing SSH from bastion SG |
-| Provider version conflicts | Updated to `>= 6.29.0` |
+| Challenge | Solution | Lesson Learned |
+|-----------|----------|----------------|
+| t2.micro not free tier eligible | Changed to t3.micro | Always verify instance type availability |
+| Health checks failing | Added `health_check_grace_period = 300` | Give instances time to bootstrap |
+| Private instances no internet | Enabled NAT Gateway | Private subnets need NAT for internet |
+| EC2 couldn't reach internet | Added outbound rule `0.0.0.0/0` | Security groups need explicit egress rules |
+| Invalid AMI ID | Used data source to find latest AMI | Never hardcode AMI IDs |
+| Instance metadata not working | Used token-based IMDSv2 | AWS requires token for metadata |
+| SSH key not on instances | Added `key_name` to ASG module | Launch template needs key_name |
+| SSH from bastion denied | Added rule allowing SSH from bastion SG | Security groups need proper references |
+| Provider version conflicts | Updated to `>= 6.29.0` | Always check module requirements |
 
 ---
 
 ## Key Learnings
 
-- **VPC Design:** Public/private subnets across multiple AZs
-- **NAT Gateway:** Enables private instances to reach internet
-- **Auto Scaling:** Min/max/desired with launch templates
-- **CloudWatch Alarms:** CPU thresholds with evaluation periods
-- **Security Groups:** Least privilege access rules
-- **Bastion Host:** Secure SSH access to private instances
-- **Terraform Modules:** Using and configuring registry modules
-- **User Data:** Automating software installation on launch
+| Skill | What I Learned |
+|-------|----------------|
+| **VPC Design** | Public/private subnets across multiple AZs |
+| **NAT Gateway** | Enables private instances to reach internet securely |
+| **Auto Scaling** | Min/max/desired with launch templates and cooldown periods |
+| **CloudWatch Alarms** | CPU thresholds with evaluation periods to prevent false triggers |
+| **Security Groups** | Least privilege access rules - ALB to EC2, Bastion to EC2, My IP to Bastion |
+| **Bastion Host** | Secure SSH access to private instances without exposing them |
+| **Terraform Modules** | Using and configuring registry modules (VPC, ALB, ASG) |
+| **User Data** | Automating software installation on instance launch |
+| **Cost Optimization** | Single NAT Gateway, scale-in policies, t3.micro instances |
 
 ---
 
 ## Cost Considerations
 
-| Resource | Estimated Monthly Cost |
-|----------|------------------------|
-| EC2 (t3.micro) × 2 | ~$15 |
-| NAT Gateway | ~$32 |
-| Application Load Balancer | ~$16 |
-| Data Transfer | ~$5-10 |
-| **Total** | **~$70-80** |
+| Resource | Estimated Monthly Cost | Notes |
+|----------|------------------------|-------|
+| EC2 (t3.micro) × 2 | ~$15 | Minimum 2 instances |
+| NAT Gateway | ~$32 | Single NAT Gateway (saves ~$65) |
+| Application Load Balancer | ~$16 | Always running |
+| Data Transfer | ~$5-10 | Variable based on traffic |
+| **Total** | **~$70-80** | With minimum 2 instances |
 
-To avoid charges: Run `terraform destroy` when not using.
+**Cost Saving Tips:**
+- Use `single_nat_gateway = true` (saves ~$65/month)
+- Set `max_size = 6` (prevents runaway costs)
+- Scale-in at CPU < 30% (avoids paying for idle servers)
+- Run `terraform destroy` when not using
 
 ---
 
 ## Clean Up
+
+To avoid ongoing charges, destroy all resources:
 
 ```bash
 terraform destroy

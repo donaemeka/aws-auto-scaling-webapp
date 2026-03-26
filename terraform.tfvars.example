@@ -1,0 +1,59 @@
+# ============================================
+# AWS Multi-AZ Auto Scaling Web Application
+# Example Variables File
+# ============================================
+# Copy this file to terraform.tfvars and update with your values
+# DO NOT commit terraform.tfvars to GitHub (it's in .gitignore)
+
+# ============================================
+# AWS Configuration
+# ============================================
+
+# AWS region for all resources (London)
+aws_region = "eu-west-2"
+
+# ============================================
+# Networking - VPC CIDR Blocks
+# ============================================
+
+# VPC CIDR block (must be a valid private IP range)
+vpc_cidr = "10.0.0.0/16"
+
+# Availability Zones (3 for high availability)
+availability_zones = ["eu-west-2a", "eu-west-2b", "eu-west-2c"]
+
+# Public subnet CIDRs (one per AZ) - for Load Balancer and NAT Gateway
+public_subnet_cidrs = ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
+
+# Private subnet CIDRs (one per AZ) - for EC2 instances
+private_subnet_cidrs = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+
+# ============================================
+# Compute - EC2 Configuration
+# ============================================
+
+# EC2 instance type (t3.micro is current generation)
+instance_type = "t3.micro"
+
+# AMI ID for Ubuntu 24.04 LTS in eu-west-2
+# Find latest at: https://cloud-images.ubuntu.com/locator/ec2/
+ami_id = "ami-09dbc7ce74870d573"
+
+# ============================================
+# SSH Access
+# ============================================
+
+# Your public IP address for SSH access (with /32)
+# Find at: https://ifconfig.me
+# Example: ssh_allowed_ip = "203.0.113.45/32"
+ssh_allowed_ip = "YOUR_IP_ADDRESS/32"
+
+# Name of your EC2 key pair (create in AWS Console → EC2 → Key Pairs)
+# Example: key_name = "my-key-pair"
+key_name = "YOUR_KEY_PAIR_NAME"
+
+# ============================================
+# Environment Tag
+# ============================================
+
+environment = "dev"
