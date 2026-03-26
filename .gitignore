@@ -1,0 +1,39 @@
+# Terraform files
+*.tfstate
+*.tfstate.*
+.terraform/
+terraform.tfvars
+terraform.tfstate
+terraform.tfstate.backup
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+*.terraform.lock.hcl
+
+# Sensitive files
+*.pem
+*.key
+*.ppk
+*.cert
+*.crt
+
+# Local files
+.DS_Store
+*.log
+*.swp
+*.bak
+
+# OS files
+Thumbs.db
+.desktop.ini
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*
+
+# SSH keys (just to be safe)
+id_rsa
+id_rsa.pub
+*.pem
